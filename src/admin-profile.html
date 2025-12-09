@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Profile - FreshMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      background-color: #f9f9f9;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: #004D40;
+      color: white;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar h2 {
+      margin-bottom: 30px;
+      font-size: 1.6rem;
+      text-align: center;
+    }
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: block;
+      transition: background 0.3s;
+    }
+    .sidebar a:hover {
+      background-color: #00796B;
+    }
+
+    .main {
+      flex: 1;
+      padding: 30px;
+    }
+    .main h1 {
+      margin-bottom: 25px;
+      color: #004D40;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      max-width: 400px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .btn {
+      background-color: #009688;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    .btn:hover {
+      background-color: #004D40;
+    }
+
+    .message {
+      margin-top: 20px;
+      color: green;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>FreshMart Admin</h2>
+    <a href="admin-dashboard.html">🏠 Dashboard</a>
+    <a href="admin-orders.html">📦 Manage Orders</a>
+    <a href="admin-users.html">👥 Manage Users</a>
+    <a href="admin-profile.html">🧑‍💼 Profile Settings</a>
+    <a href="admin-export.html">📄 Export Data</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+    <h1>Admin Profile Settings</h1>
+    
+    <form onsubmit="updateProfile(event)">
+      <div class="form-group">
+        <label for="adminName">Admin Name</label>
+        <input type="text" id="adminName" required>
+      </div>
+      <div class="form-group">
+        <label for="adminPassword">New Password</label>
+        <input type="password" id="adminPassword" required>
+      </div>
+      <button class="btn" type="submit">Update Profile</button>
+      <div id="msg" class="message"></div>
+    </form>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    if (!requireAdmin()) {
+      return;
+    }
+
+    // Load current user profile
+    async function loadProfile() {
+      try {
+        const user = getUser();
+        if (user) {
+          document.getElementById("adminName").value = user.name || "";
+        }
+      } catch (error) {
+        console.error("Error loading profile:", error);
+      }
+    }
+
+    async function updateProfile(e) {
+      e.preventDefault();
+      const newName = document.getElementById("adminName").value;
+      const newPassword = document.getElementById("adminPassword").value;
+      const msg = document.getElementById("msg");
+
+      if (!newName) {
+        msg.innerText = "Name is required!";
+        msg.style.color = "red";
+        return;
+      }
+
+      try {
+        const user = getUser();
+        if (!user || !user.id) {
+          throw new Error("User not found");
+        }
+
+        // Update name
+        await usersAPI.update(user.id, { name: newName });
+
+        // Note: Password update would require a separate endpoint
+        // For now, we'll just update the name
+        if (newPassword) {
+          msg.innerText = "Profile updated! Note: Password update requires backend support.";
+          msg.style.color = "orange";
+        } else {
+          msg.innerText = "Profile updated successfully!";
+          msg.style.color = "green";
+        }
+
+        // Refresh user data
+        await authAPI.getCurrentUser();
+        loadProfile();
+      } catch (error) {
+        console.error("Error updating profile:", error);
+        msg.innerText = "Error updating profile: " + error.message;
+        msg.style.color = "red";
+      }
+    }
+
+    document.querySelector('form').addEventListener('submit', updateProfile);
+    loadProfile();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,331 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FreshMart - Home</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: "Poppins", sans-serif;
+        background-color: #f5f5f5;
+        color: #333;
+      }
+
+      nav {
+        background-color: #009688;
+        padding: 15px 30px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        color: white;
+        flex-wrap: wrap;
+      }
+      nav h1 {
+        font-size: 1.8rem;
+      }
+      nav ul {
+        list-style: none;
+        display: flex;
+        gap: 25px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      nav ul li a,
+      nav ul li span {
+        color: white;
+        text-decoration: none;
+        font-weight: 500;
+        transition: 0.3s;
+      }
+      nav ul li a:hover {
+        text-decoration: underline;
+      }
+
+      .hero {
+        background: linear-gradient(rgba(0, 0, 0, 0.5), #009688),
+          url("https://images.unsplash.com/photo-1606813908927-3832e577c1e9")
+            no-repeat center center/cover;
+        height: 85vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        color: white;
+        padding: 20px;
+      }
+      .hero h2 {
+        font-size: 3rem;
+        margin-bottom: 15px;
+      }
+      .hero p {
+        font-size: 1.2rem;
+        margin-bottom: 25px;
+      }
+      .hero a {
+        background-color: white;
+        color: #009688;
+        padding: 12px 25px;
+        font-weight: bold;
+        text-decoration: none;
+        border-radius: 30px;
+        transition: 0.3s;
+      }
+      .hero a:hover {
+        background-color: #004d40;
+        color: white;
+      }
+
+      .about {
+        background-color: #ffffff;
+        padding: 60px 20px;
+        text-align: center;
+        opacity: 0;
+        transform: translateY(40px);
+        transition: all 0.6s ease-out;
+      }
+      .about-container {
+        max-width: 900px;
+        margin: 0 auto;
+      }
+      .about h3 {
+        font-size: 2rem;
+        color: #00796b;
+        margin-bottom: 20px;
+      }
+      .about p {
+        font-size: 1.05rem;
+        line-height: 1.7;
+        margin-bottom: 15px;
+        color: #444;
+      }
+      .about.reveal {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      .categories,
+      .featured {
+        max-width: 1200px;
+        margin: 50px auto;
+        padding: 0 20px;
+      }
+      .categories h3,
+      .featured h3 {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 30px;
+        color: #00796b;
+      }
+      .category-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 25px;
+      }
+      .category-card {
+        background-color: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        text-align: center;
+        transition: 0.3s;
+      }
+      .category-card:hover {
+        transform: translateY(-5px);
+      }
+      .category-card img {
+        height: 100px;
+        margin-bottom: 15px;
+      }
+
+      .product-row {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 30px;
+      }
+      .product {
+        background: white;
+        border-radius: 10px;
+        padding: 15px;
+        width: 220px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        text-align: center;
+      }
+      .product img {
+        height: 140px;
+        margin-bottom: 10px;
+        border-radius: 8px;
+        object-fit: cover;
+        width: 100%;
+      }
+      .product h4 {
+        color: #00796b;
+        margin: 10px 0 5px;
+      }
+      .product p {
+        font-size: 14px;
+      }
+
+      footer {
+        background-color: #333;
+        color: white;
+        text-align: center;
+        padding: 20px 10px;
+        margin-top: 50px;
+      }
+
+      @media (max-width: 600px) {
+        .hero h2 {
+          font-size: 2rem;
+        }
+        nav {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        nav ul {
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 10px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Navbar -->
+    <nav>
+      <h1>FreshMart</h1>
+      <ul id="nav-links">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="products.html">Products</a></li>
+        <li><a href="cart.html">Cart</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li id="userArea"><a href="user-login.html">Login</a></li>
+      </ul>
+    </nav>
+
+    <!-- Hero -->
+    <section class="hero">
+      <h2>Welcome to FreshMart</h2>
+      <p>
+        Your one-stop shop for groceries, cleaning, and more — delivered fast!
+      </p>
+      <a href="products.html">Shop Now</a>
+    </section>
+
+    <!-- About with Scroll Animation -->
+    <section class="about">
+      <div class="about-container">
+        <h3>About FreshMart</h3>
+        <p>
+          FreshMart is your trusted online departmental store offering a wide
+          variety of daily essentials — from grocery to cleaning supplies and
+          beverages.
+        </p>
+        <p>
+          We ensure freshness, fast service, and a friendly shopping experience
+          every time. Start shopping today and discover the smarter way to buy!
+        </p>
+      </div>
+    </section>
+
+    <!-- Categories -->
+    <section class="categories">
+      <h3>Shop by Category</h3>
+      <div class="category-grid">
+        <div class="category-card">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/3081/3081559.png"
+            alt="Grocery"
+          />
+          <h4>Grocery</h4>
+        </div>
+        <div class="category-card">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/1903/1903162.png"
+            alt="Cleaning"
+          />
+          <h4>Cleaning Supplies</h4>
+        </div>
+        <div class="category-card">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/2917/2917991.png"
+            alt="Toiletries"
+          />
+          <h4>Toiletries</h4>
+        </div>
+        <div class="category-card">
+          <img
+            src="https://cdn-icons-png.flaticon.com/512/1674/1674291.png"
+            alt="Beverages"
+          />
+          <h4>Beverages</h4>
+        </div>
+      </div>
+    </section>
+
+    <!-- Featured Products -->
+    <section class="featured">
+      <h3>Featured Products</h3>
+      <div class="product-row">
+        <div class="product">
+          <img src="assets/rice.jpg" alt="Rice" />
+          <h4>Basmati Rice 5kg</h4>
+          <p>Rs. 1450</p>
+        </div>
+        <div class="product">
+          <img src="assets/surfexcel.jpg" alt="Detergent" />
+          <h4>Surf Excel 2kg</h4>
+          <p>Rs. 850</p>
+        </div>
+        <div class="product">
+          <img src="assets/oil.jpg" alt="Oil" />
+          <h4>Sunflower Oil 1L</h4>
+          <p>Rs. 620</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+      &copy; 2025 FreshMart Departmental Store. All rights reserved.
+    </footer>
+
+    <!-- Scroll Animation -->
+    <script>
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("reveal");
+          }
+        });
+      });
+      observer.observe(document.querySelector(".about"));
+    </script>
+
+    <!-- Login Info Display -->
+    <script src="js/api.js"></script>
+    <script src="js/auth.js"></script>
+    <script>
+      const userArea = document.getElementById("userArea");
+      const user = getUser();
+
+      if (user && userArea) {
+        userArea.innerHTML = `
+        <span style="color:white">Welcome, ${user.name}</span>
+        <a href="#" onclick="handleLogout()" style="margin-left:15px; color:yellow;">Logout</a>
+      `;
+      }
+    </script>
+  </body>
+</html>

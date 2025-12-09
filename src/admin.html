@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>New Admin Page - FreshMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      background-color: #f5f5f5;
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: #004D40;
+      color: white;
+      padding: 30px 20px;
+      min-height: 100vh;
+    }
+    .sidebar h2 {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    .sidebar a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      transition: background 0.3s;
+    }
+    .sidebar a:hover {
+      background-color: #00796B;
+    }
+
+    .main {
+      flex: 1;
+      padding: 30px;
+      position: relative;
+    }
+    .main h1 {
+      color: #004D40;
+      margin-bottom: 20px;
+    }
+    .main p {
+      font-size: 16px;
+      color: #333;
+    }
+
+    .notification-icon {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 22px;
+      cursor: pointer;
+      color: #00796B;
+    }
+    .notification-badge {
+      position: absolute;
+      top: 15px;
+      right: 25px;
+      background: red;
+      color: white;
+      font-size: 12px;
+      padding: 2px 6px;
+      border-radius: 50%;
+    }
+    .popup {
+      position: absolute;
+      top: 50px;
+      right: 30px;
+      width: 300px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      padding: 15px;
+      display: none;
+      z-index: 1000;
+    }
+    .popup h4 {
+      margin-bottom: 10px;
+      color: #004D40;
+    }
+    .popup ul {
+      list-style: none;
+    }
+    .popup ul li {
+      margin-bottom: 8px;
+      font-size: 14px;
+      border-bottom: 1px solid #eee;
+      padding-bottom: 5px;
+    }
+
+    .dashboard-section {
+      margin-top: 40px;
+    }
+    .dashboard-section h2 {
+      margin-bottom: 15px;
+      color: #00796B;
+    }
+    .chart-container {
+      max-width: 600px;
+      margin-bottom: 40px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      margin-bottom: 40px;
+    }
+    table th, table td {
+      padding: 10px;
+      text-align: left;
+      border-bottom: 1px solid #ccc;
+    }
+    form input, form button {
+      padding: 10px;
+      margin-bottom: 10px;
+      width: 100%;
+      font-size: 1rem;
+    }
+    form button {
+      background-color: #00796B;
+      color: white;
+      border: none;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+  <div class="sidebar">
+    <h2>FreshMart Admin</h2>
+    <a href="admin-dashboard.html">🏠 Dashboard</a>
+    <a href="admin-orders.html">📦 Manage Orders</a>
+    <a href="admin-users.html">👥 Manage Users</a>
+    <a href="admin-profile.html">🧑‍💼 Profile Settings</a>
+    <a href="admin-export.html">📄 Export Data</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </div>
+
+  <div class="main">
+    <div class="notification-icon" onclick="togglePopup()">🔔</div>
+    <div class="notification-badge" id="badge">3</div>
+    <div class="popup" id="popup">
+      <h4>Recent Notifications</h4>
+      <ul id="notifList"></ul>
+    </div>
+
+    <h1>New Admin Page</h1>
+    <p>Use this area to add new features, charts, tables, and forms for admin control.</p>
+
+    <div class="dashboard-section">
+      <h2>Sales Chart</h2>
+      <div class="chart-container">
+        <canvas id="salesChart"></canvas>
+      </div>
+
+      <h2>Recent Customers</h2>
+      <table>
+        <thead>
+          <tr><th>Name</th><th>Email</th><th>Joined</th></tr>
+        </thead>
+        <tbody>
+          <tr><td colspan="3" style="text-align: center; padding: 20px;">Loading customers...</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Add New Product</h2>
+      <form id="productForm">
+        <input type="text" id="productName" placeholder="Product Name" required />
+        <input type="number" id="productPrice" placeholder="Price (Rs.)" step="0.01" min="0" required />
+        <select id="productCategory" required>
+          <option value="">Select Category</option>
+          <option value="grocery">Grocery</option>
+          <option value="cleaning">Cleaning</option>
+          <option value="oil">Oil</option>
+          <option value="beverages">Beverages</option>
+          <option value="vegetables">Vegetables</option>
+          <option value="fruits">Fruits</option>
+        </select>
+        <input type="text" id="productImage" placeholder="Image URL (optional)" />
+        <input type="text" id="productDescription" placeholder="Description (optional)" />
+        <input type="number" id="productStock" placeholder="Stock Quantity" min="0" value="0" />
+        <button type="submit">Add Product</button>
+      </form>
+      <div id="productMessage" style="margin-top: 10px; padding: 10px; display: none;"></div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Check admin access
+    if (!requireAdmin()) {
+      return;
+    }
+
+    function logout() {
+      if (typeof authAPI !== 'undefined') {
+        authAPI.logout();
+      } else {
+        window.location.href = "admin-login.html";
+      }
+    }
+
+    function togglePopup() {
+      const popup = document.getElementById("popup");
+      popup.style.display = popup.style.display === "block" ? "none" : "block";
+    }
+
+    // Load notifications from orders (recent orders)
+    async function loadNotifications() {
+      try {
+        const response = await ordersAPI.getAll();
+        const orders = response.data || [];
+        const recentOrders = orders.slice(0, 3);
+        
+        const notifications = recentOrders.map(order => {
+          const customer = order.user ? (order.user.name || order.user.email) : 'Customer';
+          return `New order #${order._id.slice(-6)} placed by ${customer}.`;
+        });
+
+        if (notifications.length === 0) {
+          notifications.push("No recent orders.");
+        }
+
+        document.getElementById("notifList").innerHTML = notifications.map(msg => `<li>${msg}</li>`).join("");
+        document.getElementById("badge").innerText = notifications.length;
+      } catch (error) {
+        console.error("Error loading notifications:", error);
+        document.getElementById("notifList").innerHTML = "<li>Error loading notifications</li>";
+        document.getElementById("badge").innerText = "0";
+      }
+    }
+
+    // Load recent customers from MongoDB
+    async function loadRecentCustomers() {
+      try {
+        console.log('Loading recent customers from MongoDB...');
+        const response = await usersAPI.getAll();
+        const users = response.data || response || [];
+        const recentUsers = users.slice(-5).reverse(); // Last 5 users
+        
+        const tableBody = document.querySelector('table tbody');
+        if (tableBody) {
+          if (recentUsers.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">No customers found.</td></tr>';
+          } else {
+            tableBody.innerHTML = recentUsers.map(user => {
+              const name = user.name || 'N/A';
+              const email = user.email || 'N/A';
+              const date = user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A';
+              return `<tr><td>${name}</td><td>${email}</td><td>${date}</td></tr>`;
+            }).join("");
+          }
+          console.log(`Loaded ${recentUsers.length} recent customers`);
+        }
+      } catch (error) {
+        console.error("Error loading customers:", error);
+        const tableBody = document.querySelector('table tbody');
+        if (tableBody) {
+          tableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: red;">Error loading customers.</td></tr>';
+        }
+      }
+    }
+
+    // Load sales chart data from orders
+    async function loadSalesChart() {
+      try {
+        const response = await ordersAPI.getAll();
+        const orders = response.data || [];
+        
+        // Group orders by day of week (simplified - in production, use actual dates)
+        const salesData = [0, 0, 0, 0, 0, 0, 0];
+        orders.forEach(order => {
+          const day = new Date(order.createdAt).getDay();
+          salesData[day] += order.totalAmount || 0;
+        });
+
+        const ctx = document.getElementById('salesChart');
+        if (ctx) {
+          new Chart(ctx, {
+            type: 'bar',
+            data: {
+              labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+              datasets: [{
+                label: 'Sales (PKR)',
+                data: salesData,
+                backgroundColor: '#009688'
+              }]
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true
+                }
+              }
+            }
+          });
+        }
+      } catch (error) {
+        console.error("Error loading sales chart:", error);
+      }
+    }
+
+    // Handle product form submission - Save to MongoDB
+    document.addEventListener('DOMContentLoaded', function() {
+      const productForm = document.getElementById('productForm');
+      const productMessage = document.getElementById('productMessage');
+
+      // Message display function
+      function showMessage(message, type) {
+        if (productMessage) {
+          productMessage.textContent = message;
+          productMessage.style.display = 'block';
+          productMessage.style.padding = '10px';
+          productMessage.style.borderRadius = '6px';
+          productMessage.style.marginTop = '10px';
+          
+          if (type === 'success') {
+            productMessage.style.backgroundColor = '#d4edda';
+            productMessage.style.color = '#155724';
+            productMessage.style.border = '1px solid #c3e6cb';
+          } else {
+            productMessage.style.backgroundColor = '#f8d7da';
+            productMessage.style.color = '#721c24';
+            productMessage.style.border = '1px solid #f5c6cb';
+          }
+          
+          // Hide message after 5 seconds
+          setTimeout(() => {
+            productMessage.style.display = 'none';
+          }, 5000);
+        } else {
+          // Fallback to alert if message div doesn't exist
+          alert(message);
+        }
+      }
+
+      if (productForm) {
+        productForm.addEventListener('submit', async function(e) {
+          e.preventDefault();
+          
+          // Get form values
+          const name = document.getElementById('productName').value.trim();
+          const price = parseFloat(document.getElementById('productPrice').value);
+          const category = document.getElementById('productCategory').value;
+          const image = document.getElementById('productImage').value.trim() || 'default.jpg';
+          const description = document.getElementById('productDescription').value.trim();
+          const stock = parseInt(document.getElementById('productStock').value) || 0;
+
+          // Validate required fields
+          if (!name || !price || !category) {
+            showMessage('Please fill all required fields (Name, Price, Category)', 'error');
+            return;
+          }
+
+          if (price <= 0 || isNaN(price)) {
+            showMessage('Price must be a valid number greater than 0', 'error');
+            return;
+          }
+
+          // Show loading state
+          const submitButton = this.querySelector('button[type="submit"]');
+          const originalButtonText = submitButton.textContent;
+          submitButton.disabled = true;
+          submitButton.textContent = 'Adding Product to MongoDB...';
+
+          try {
+            // Ensure image is not empty (required by MongoDB schema)
+            const productImage = image && image.trim() !== '' ? image.trim() : 'default.jpg';
+            
+            // Prepare product data for MongoDB
+            const productData = {
+              name: name,
+              price: price,
+              category: category.toLowerCase(),
+              image: productImage,
+              description: description || '',
+              stock: stock || 0,
+              isActive: true
+            };
+
+            console.log('📦 Creating product in MongoDB...', productData);
+            console.log('🔑 Checking authentication...');
+            
+            // Verify user is authenticated
+            const token = localStorage.getItem('token');
+            if (!token) {
+              throw new Error('Not authenticated. Please login as admin.');
+            }
+            console.log('✅ Authentication token found');
+            
+            // Call API to save product to MongoDB
+            const response = await productsAPI.create(productData);
+
+            console.log('📥 API Response:', response);
+            
+            if (response && response.success && response.data) {
+              console.log('✅ Product created successfully in MongoDB:', response.data);
+              showMessage(`✅ Product "${name}" added successfully to MongoDB! (ID: ${response.data._id})`, 'success');
+              
+              // Reset form after successful save
+              this.reset();
+              document.getElementById('productStock').value = '0';
+              
+              // Log success for debugging
+              console.log('📊 Product saved to MongoDB collection "products"');
+              console.log('🔍 View in MongoDB Compass: freshmart > products collection');
+              console.log('📋 Product data:', JSON.stringify(response.data, null, 2));
+            } else {
+              console.error('❌ Unexpected response format:', response);
+              throw new Error(response?.message || 'Unexpected response format from server');
+            }
+            
+          } catch (error) {
+            console.error("❌ Error adding product to MongoDB:", error);
+            console.error("Full error object:", error);
+            
+            // Extract detailed error message
+            let errorMsg = 'Unknown error occurred';
+            if (error.message) {
+              errorMsg = error.message;
+            } else if (error.errors) {
+              errorMsg = Object.values(error.errors).map(e => e.message).join(', ');
+            } else if (typeof error === 'string') {
+              errorMsg = error;
+            }
+            
+            // Check for common errors
+            if (errorMsg.includes('401') || errorMsg.includes('Not authorized')) {
+              errorMsg = 'Authentication failed. Please login as admin.';
+            } else if (errorMsg.includes('403') || errorMsg.includes('not authorized')) {
+              errorMsg = 'Access denied. Admin role required.';
+            } else if (errorMsg.includes('ValidationError')) {
+              errorMsg = 'Validation error: ' + errorMsg;
+            }
+            
+            showMessage(`❌ Error adding product: ${errorMsg}. Check browser console (F12) for details.`, 'error');
+            
+            // Log detailed error for debugging
+            console.error('Error details:', {
+              message: error.message,
+              stack: error.stack,
+              response: error.response
+            });
+          } finally {
+            submitButton.disabled = false;
+            submitButton.textContent = originalButtonText;
+          }
+        });
+      } else {
+        console.error('Product form not found!');
+      }
+    });
+
+    // Load all data on page load (consolidated with form handler)
+    // This is already handled in the form handler's DOMContentLoaded above
+    // But we'll add it here as a fallback
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function() {
+        loadNotifications();
+        loadRecentCustomers();
+        loadSalesChart();
+      });
+    } else {
+      // DOM already loaded
+      loadNotifications();
+      loadRecentCustomers();
+      loadSalesChart();
+    }
+  </script>
+</body>
+</html>

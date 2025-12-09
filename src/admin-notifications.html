@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Notifications - FreshMart Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      background-color: #f4f4f4;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: 240px;
+      background-color: #004D40;
+      color: white;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar h2 {
+      margin-bottom: 30px;
+      font-size: 1.6rem;
+      text-align: center;
+    }
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: block;
+      transition: background 0.3s;
+    }
+    .sidebar a:hover {
+      background-color: #00796B;
+    }
+
+    .main {
+      flex: 1;
+      padding: 30px;
+    }
+
+    .main h1 {
+      color: #004D40;
+      margin-bottom: 25px;
+    }
+
+    .notification {
+      background-color: white;
+      padding: 20px;
+      border-left: 6px solid #009688;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+      position: relative;
+    }
+
+    .notification.read {
+      opacity: 0.6;
+      border-left-color: #ccc;
+    }
+
+    .notification h4 {
+      margin-bottom: 8px;
+      color: #00796B;
+    }
+
+    .notification p {
+      font-size: 15px;
+    }
+
+    .notification .mark-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background-color: #00796B;
+      color: white;
+      padding: 5px 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    .notification .mark-btn:hover {
+      background-color: #004D40;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>FreshMart Admin</h2>
+    <a href="admin-dashboard.html">🏠 Dashboard</a>
+    <a href="admin-orders.html">📦 Manage Orders</a>
+    <a href="admin-users.html">👥 Manage Users</a>
+    <a href="admin-profile.html">🧑‍💼 Profile Settings</a>
+    <a href="admin-export.html">📄 Export Data</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+    <h1>Admin Notifications</h1>
+    <div id="notificationsContainer"></div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    if (!requireAdmin()) {
+      return;
+    }
+
+    // Sample notifications (in production, these would come from MongoDB)
+    const defaultNotifications = [
+      { id: 1, title: "New Order Placed", message: "Order #1042 placed by user Ali Khan.", read: false },
+      { id: 2, title: "Low Inventory Alert", message: "Sunflower Oil stock is below threshold.", read: false },
+      { id: 3, title: "New User Signup", message: "User Sara Ahmed registered an account.", read: false }
+    ];
+
+    // Store notifications in sessionStorage (temporary, could be moved to MongoDB)
+    let notifications = JSON.parse(sessionStorage.getItem("adminNotifications")) || defaultNotifications;
+    if (!sessionStorage.getItem("adminNotifications")) {
+      sessionStorage.setItem("adminNotifications", JSON.stringify(notifications));
+    }
+
+    const container = document.getElementById("notificationsContainer");
+
+    function renderNotifications() {
+      notifications = JSON.parse(sessionStorage.getItem("adminNotifications")) || [];
+      container.innerHTML = "";
+
+      if (notifications.length === 0) {
+        container.innerHTML = "<p>No notifications found.</p>";
+        return;
+      }
+
+      notifications.forEach(n => {
+        const div = document.createElement("div");
+        div.className = "notification" + (n.read ? " read" : "");
+        div.innerHTML = `
+          <h4>${n.title}</h4>
+          <p>${n.message}</p>
+          ${!n.read ? `<button class="mark-btn" onclick="markAsRead(${n.id})">Mark as Read</button>` : ""}
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    function markAsRead(id) {
+      notifications = notifications.map(n => {
+        if (n.id === id) n.read = true;
+        return n;
+      });
+      sessionStorage.setItem("adminNotifications", JSON.stringify(notifications));
+      renderNotifications();
+    }
+
+    renderNotifications();
+  </script>
+</body>
+</html>

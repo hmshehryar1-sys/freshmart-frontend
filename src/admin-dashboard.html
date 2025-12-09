@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Dashboard - FreshMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f4f4f4;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background-color: #004D40;
+      color: white;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar h2 {
+      margin-bottom: 30px;
+      font-size: 1.6rem;
+      text-align: center;
+    }
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: block;
+      transition: background 0.3s;
+    }
+    .sidebar a:hover {
+      background-color: #00796B;
+    }
+
+    /* Content */
+    .main {
+      flex: 1;
+      padding: 30px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+    }
+    .topbar h1 {
+      color: #004D40;
+    }
+    .logout-btn {
+      padding: 8px 16px;
+      background-color: #009688;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 25px;
+    }
+    .stat-box {
+      background-color: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      text-align: center;
+    }
+    .stat-box h3 {
+      margin-bottom: 10px;
+      color: #00796B;
+    }
+    .stat-box p {
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    @media(max-width: 768px) {
+      .sidebar {
+        display: none;
+      }
+      body {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>FreshMart Admin</h2>
+    <a href="admin-dashboard.html">🏠 Dashboard</a>
+    <a href="admin-orders.html">📦 Manage Orders</a>
+    <a href="admin-users.html">👥 Manage Users</a>
+    <a href="admin-profile.html">🧑‍💼 Profile Settings</a>
+    <a href="admin-export.html">📄 Export Data</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+    <div class="topbar">
+      <h1>Dashboard Overview</h1>
+      <button class="logout-btn" onclick="logout()">Logout</button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-box">
+        <h3>Total Users</h3>
+        <p id="userCount">0</p>
+      </div>
+      <div class="stat-box">
+        <h3>Total Orders</h3>
+        <p id="orderCount">0</p>
+      </div>
+      <div class="stat-box">
+        <h3>Total Revenue</h3>
+        <p id="revenue">Rs. 0</p>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check admin access
+      if (!requireAdmin()) {
+        return;
+      }
+
+      // Get DOM elements
+      const userCountEl = document.getElementById("userCount");
+      const orderCountEl = document.getElementById("orderCount");
+      const revenueEl = document.getElementById("revenue");
+
+      // Show loading state
+      if (userCountEl) userCountEl.textContent = "Loading...";
+      if (orderCountEl) orderCountEl.textContent = "Loading...";
+      if (revenueEl) revenueEl.textContent = "Loading...";
+
+      // Load Dashboard Data
+      async function loadDashboard() {
+        try {
+          console.log('Fetching dashboard data from API...');
+          
+          const [usersResponse, ordersResponse] = await Promise.all([
+            usersAPI.getAll(),
+            ordersAPI.getAll()
+          ]);
+
+          console.log('Users response:', usersResponse);
+          console.log('Orders response:', ordersResponse);
+
+          // Handle different response structures
+          const users = usersResponse.data || usersResponse || [];
+          const orders = ordersResponse.data || ordersResponse || [];
+
+          if (!Array.isArray(users) || !Array.isArray(orders)) {
+            console.error('Invalid response format');
+            throw new Error('Invalid response format from server');
+          }
+
+          // Update user count
+          const userCount = users.length;
+          if (userCountEl) {
+            userCountEl.textContent = userCount;
+          }
+
+          // Update order count
+          const orderCount = orders.length;
+          if (orderCountEl) {
+            orderCountEl.textContent = orderCount;
+          }
+
+          // Calculate total revenue from all orders
+          const revenue = orders.reduce((sum, order) => {
+            const amount = parseFloat(order.totalAmount) || 0;
+            return sum + amount;
+          }, 0);
+
+          // Update revenue
+          if (revenueEl) {
+            revenueEl.textContent = "Rs. " + revenue.toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2
+            });
+          }
+
+          console.log(`Dashboard updated: ${userCount} users, ${orderCount} orders, Rs. ${revenue.toFixed(2)} revenue`);
+        } catch (error) {
+          console.error("Error loading dashboard:", error);
+          
+          // Show error state
+          if (userCountEl) userCountEl.textContent = "Error";
+          if (orderCountEl) orderCountEl.textContent = "Error";
+          if (revenueEl) revenueEl.textContent = "Error";
+          
+          // Show error message after a delay to avoid blocking
+          setTimeout(() => {
+            console.error("Full error details:", error);
+          }, 100);
+        }
+      }
+
+      // Auto-refresh dashboard every 30 seconds for real-time updates
+      let refreshInterval;
+      
+      function startAutoRefresh() {
+        // Load immediately
+        loadDashboard();
+        
+        // Then refresh every 30 seconds
+        refreshInterval = setInterval(() => {
+          console.log('Auto-refreshing dashboard...');
+          loadDashboard();
+        }, 30000); // 30 seconds
+      }
+
+      // Start auto-refresh
+      startAutoRefresh();
+
+      // Clean up interval when page is hidden
+      document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+          if (refreshInterval) {
+            clearInterval(refreshInterval);
+          }
+        } else {
+          // Reload when page becomes visible again
+          loadDashboard();
+          startAutoRefresh();
+        }
+      });
+
+      // Logout function
+      window.logout = function() {
+        if (refreshInterval) {
+          clearInterval(refreshInterval);
+        }
+        if (typeof authAPI !== 'undefined') {
+          authAPI.logout();
+        } else {
+          window.location.href = "admin-login.html";
+        }
+      };
+    });
+  </script>
+
+</body>
+</html>

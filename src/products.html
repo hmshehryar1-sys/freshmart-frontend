@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Products - FreshMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+
+    nav {
+      background-color: #009688;
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      color: white;
+    }
+    nav h1 { font-size: 1.8rem; }
+    nav ul {
+      list-style: none;
+      display: flex;
+      gap: 25px;
+      flex-wrap: wrap;
+    }
+    nav ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: 0.3s;
+    }
+    nav ul li a:hover {
+      text-decoration: underline;
+    }
+
+    .header {
+      text-align: center;
+      padding: 40px 20px;
+      background-color: #e0f2f1;
+    }
+    .header h2 {
+      color: #00796B;
+      font-size: 2.5rem;
+    }
+
+    .filters {
+      max-width: 1200px;
+      margin: 20px auto;
+      padding: 0 20px;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .filters input, .filters select {
+      padding: 10px;
+      font-size: 1rem;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      flex: 1;
+      min-width: 160px;
+    }
+
+    .products {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 25px;
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+    .product-card {
+      background: white;
+      padding: 15px;
+      border-radius: 12px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      text-align: center;
+      position: relative;
+      opacity: 0;
+      transform: translateY(40px);
+      transition: all 0.5s ease;
+    }
+    .product-card.reveal {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    .product-card img {
+      max-width: 100%;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    .product-card h3 {
+      margin-top: 10px;
+      color: #00796B;
+    }
+    .product-card p {
+      margin: 5px 0;
+    }
+    .product-card button {
+      background-color: #009688;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 6px;
+      cursor: pointer;
+      margin: 5px 5px 0;
+      transition: background 0.3s;
+    }
+    .product-card button:hover {
+      background-color: #004D40;
+    }
+
+    .pagination {
+      text-align: center;
+      margin: 20px 0;
+    }
+    .pagination button {
+      padding: 10px 15px;
+      margin: 0 5px;
+      border: none;
+      border-radius: 6px;
+      background-color: #009688;
+      color: white;
+      cursor: pointer;
+    }
+    .pagination button:hover {
+      background-color: #004D40;
+    }
+
+    footer {
+      background-color: #333;
+      color: white;
+      text-align: center;
+      padding: 20px;
+      margin-top: 40px;
+    }
+
+    @media (max-width: 600px) {
+      .filters {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <nav>
+    <h1>FreshMart</h1>
+    <ul>
+      <li><a href="index.html">Home</a></li>
+      <li><a href="products.html">Products</a></li>
+      <li><a href="cart.html">Cart</a></li>
+      <li><a href="contact.html">Contact</a></li>
+    </ul>
+  </nav>
+
+  <section class="header">
+    <h2>Our Products</h2>
+  </section>
+
+  <div class="filters">
+    <input type="text" id="searchBar" placeholder="Search products...">
+    <select id="categorySelect">
+      <option value="">All Categories</option>
+      <option value="grocery">Grocery</option>
+      <option value="cleaning">Cleaning</option>
+      <option value="oil">Oils</option>
+      <option value="beverages">Beverages</option>
+      <option value="vegetables">Vegetables</option>
+      <option value="fruits">Fruits</option>
+    </select>
+    <select id="sortSelect">
+      <option value="default">Sort by</option>
+      <option value="asc">Price: Low to High</option>
+      <option value="desc">Price: High to Low</option>
+    </select>
+    <input type="number" id="minPrice" placeholder="Min Price">
+    <input type="number" id="maxPrice" placeholder="Max Price">
+  </div>
+
+  <section class="products" id="productContainer"></section>
+  <div class="pagination" id="pagination"></div>
+
+  <footer>
+    &copy; 2025 FreshMart Departmental Store. All rights reserved.
+  </footer>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    let products = [];
+    let currentPage = 1;
+    const productsPerPage = 4;
+
+    // Load products from MongoDB
+    async function loadProducts() {
+      const container = document.getElementById('productContainer');
+      
+      // Show loading state
+      container.innerHTML = '<p style="text-align:center; padding:40px; color:#666;">Loading products from MongoDB...</p>';
+      
+      try {
+        const category = document.getElementById('categorySelect').value;
+        const search = document.getElementById('searchBar').value;
+        const minPrice = document.getElementById('minPrice').value;
+        const maxPrice = document.getElementById('maxPrice').value;
+        const sort = document.getElementById('sortSelect').value;
+
+        const filters = {};
+        if (category) filters.category = category;
+        if (search) filters.search = search;
+        if (minPrice) filters.minPrice = minPrice;
+        if (maxPrice) filters.maxPrice = maxPrice;
+        if (sort && sort !== 'default') filters.sort = sort;
+
+        console.log('🛒 Fetching products from MongoDB with filters:', filters);
+        const response = await productsAPI.getAll(filters);
+        console.log('✅ Products response from MongoDB:', response);
+        
+        // Handle different response structures
+        products = response.data || response || [];
+        
+        if (!Array.isArray(products)) {
+          console.error('Invalid response format:', response);
+          container.innerHTML = '<p style="text-align:center; padding:40px; color:red;">Error: Invalid response format from server.</p>';
+          return;
+        }
+        
+        if (products.length === 0) {
+          container.innerHTML = '<p style="text-align:center; padding:40px; color:#666;">No products found in MongoDB. Please add products through the admin panel.</p>';
+          console.log('ℹ️ No products found in MongoDB');
+        } else {
+          console.log(`✅ Loaded ${products.length} products from MongoDB`);
+          renderProducts();
+        }
+      } catch (error) {
+        console.error("❌ Error loading products from MongoDB:", error);
+        container.innerHTML = `<p style="text-align:center; padding:40px; color:red;">Error loading products: ${error.message || 'Unknown error'}.<br><small>Make sure the backend server is running on port 5000 and MongoDB is connected.</small></p>`;
+      }
+    }
+
+    function renderProducts() {
+      const container = document.getElementById('productContainer');
+      const start = (currentPage - 1) * productsPerPage;
+      const end = start + productsPerPage;
+      const filtered = getFilteredProducts();
+      container.innerHTML = '';
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<p style="text-align:center; padding:40px; color:#666;">No products match your filters.</p>';
+        document.getElementById('pagination').innerHTML = '';
+        return;
+      }
+
+      filtered.slice(start, end).forEach(product => {
+        const card = document.createElement('div');
+        card.className = 'product-card';
+        
+        // Handle missing fields
+        const productId = product._id || '';
+        const productName = product.name || 'Unnamed Product';
+        const productPrice = product.price || 0;
+        const productImage = product.image || 'default.jpg';
+        const productDescription = product.description || '';
+        
+        // Escape special characters for safe HTML
+        const safeName = productName.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+        const safeImage = productImage.replace(/'/g, "&#39;").replace(/"/g, "&quot;");
+        
+        card.innerHTML = `
+          <img src="${safeImage}" alt="${safeName}" onerror="this.src='default.jpg'">
+          <h3>${safeName}</h3>
+          <p>Rs. ${productPrice.toFixed(2)}</p>
+          ${productDescription ? `<p style="font-size:0.9rem; color:#666; margin-top:5px;">${productDescription}</p>` : ''}
+          <button onclick="addToCart('${productId}', '${safeName}', ${productPrice}, '${safeImage}')">Add to Cart</button>
+        `;
+        container.appendChild(card);
+        observer.observe(card);
+      });
+
+      renderPagination(filtered.length);
+    }
+
+    function getFilteredProducts() {
+      const search = document.getElementById('searchBar').value.toLowerCase();
+      const category = document.getElementById('categorySelect').value;
+      const min = parseInt(document.getElementById('minPrice').value) || 0;
+      const max = parseInt(document.getElementById('maxPrice').value) || Infinity;
+      return products.filter(p => {
+        return p.name.toLowerCase().includes(search) &&
+          (category === '' || p.category === category) &&
+          p.price >= min && p.price <= max;
+      });
+    }
+
+    function renderPagination(totalItems) {
+      const totalPages = Math.ceil(totalItems / productsPerPage);
+      const pagination = document.getElementById('pagination');
+      pagination.innerHTML = '';
+      for (let i = 1; i <= totalPages; i++) {
+        pagination.innerHTML += `<button onclick="goToPage(${i})">${i}</button>`;
+      }
+    }
+
+    function goToPage(page) {
+      currentPage = page;
+      renderProducts();
+    }
+
+    async function sortProducts() {
+      await loadProducts();
+    }
+
+    async function addToCart(productId, name, price, image) {
+      if (!isAuthenticated()) {
+        alert("Please login to add items to cart");
+        window.location.href = "user-login.html";
+        return;
+      }
+
+      try {
+        await cartAPI.add({
+          productId,
+          name,
+          price,
+          image,
+          quantity: 1
+        });
+        alert(`${name} added to cart!`);
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        alert("Error adding to cart: " + error.message);
+      }
+    }
+
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('reveal');
+        }
+      });
+    });
+
+    // Wait for DOM to be ready
+    document.addEventListener('DOMContentLoaded', function() {
+      // Update filter handlers
+      const searchBar = document.getElementById('searchBar');
+      const categorySelect = document.getElementById('categorySelect');
+      const minPrice = document.getElementById('minPrice');
+      const maxPrice = document.getElementById('maxPrice');
+      const sortSelect = document.getElementById('sortSelect');
+
+      if (searchBar) {
+        searchBar.addEventListener('input', () => {
+          currentPage = 1;
+          renderProducts(); // Use renderProducts for client-side filtering
+        });
+      }
+
+      if (categorySelect) {
+        categorySelect.addEventListener('change', () => {
+          currentPage = 1;
+          loadProducts(); // Reload from server for category filter
+        });
+      }
+
+      if (minPrice) {
+        minPrice.addEventListener('input', () => {
+          currentPage = 1;
+          renderProducts(); // Client-side filtering
+        });
+      }
+
+      if (maxPrice) {
+        maxPrice.addEventListener('input', () => {
+          currentPage = 1;
+          renderProducts(); // Client-side filtering
+        });
+      }
+
+      if (sortSelect) {
+        sortSelect.addEventListener('change', () => {
+          currentPage = 1;
+          loadProducts(); // Reload from server for sorting
+        });
+      }
+
+      // Load products from MongoDB on page load
+      console.log('📦 Initializing products page...');
+      loadProducts();
+    });
+  </script>
+
+</body>
+</html>
+
+
+

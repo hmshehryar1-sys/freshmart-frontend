@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Manage Products - FreshMart Admin</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: #f0f4f4;
+      display: flex;
+      min-height: 100vh;
+    }
+
+    aside {
+      width: 240px;
+      background-color: #009688;
+      color: white;
+      padding: 20px;
+    }
+
+    aside h2 {
+      margin-bottom: 30px;
+    }
+
+    aside ul {
+      list-style: none;
+    }
+
+    aside ul li {
+      margin-bottom: 15px;
+    }
+
+    aside ul li a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    main {
+      flex: 1;
+      padding: 30px;
+    }
+
+    h1 {
+      color: #00796B;
+      margin-bottom: 20px;
+    }
+
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      margin-bottom: 40px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    form input, form select, form button {
+      padding: 10px;
+      margin: 10px 5px 10px 0;
+      font-size: 1rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    form button {
+      background-color: #009688;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    form button:hover {
+      background-color: #004D40;
+    }
+
+    table {
+      width: 100%;
+      background: white;
+      border-collapse: collapse;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    table th, table td {
+      padding: 12px;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+
+    table th {
+      background-color: #00796B;
+      color: white;
+    }
+
+    .action-btn {
+      padding: 6px 12px;
+      margin-right: 5px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      color: white;
+    }
+
+    .edit-btn {
+      background-color: #0288D1;
+    }
+
+    .delete-btn {
+      background-color: #D32F2F;
+    }
+
+    @media (max-width: 768px) {
+      aside { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <aside>
+    <h2>Admin Panel</h2>
+    <ul>
+      <li><a href="admin.html">Dashboard</a></li>
+      <li><a href="admin-products.html">Manage Products</a></li>
+      <li><a href="#">Orders</a></li>
+      <li><a href="#">Users</a></li>
+      <li><a href="index.html">Back to Store</a></li>
+    </ul>
+  </aside>
+
+  <main>
+    <h1>Manage Products</h1>
+
+    <form id="productForm">
+      <input type="text" id="name" placeholder="Product Name" required />
+      <input type="number" id="price" placeholder="Price" required />
+      <input type="text" id="category" placeholder="Category" required />
+      <input type="text" id="image" placeholder="Image Filename (e.g. rice.jpg)" required />
+      <button type="submit">Add Product</button>
+    </form>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Product</th>
+          <th>Price</th>
+          <th>Category</th>
+          <th>Image</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="productTable">
+        <!-- Product rows will appear here -->
+      </tbody>
+    </table>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    if (!requireAdmin()) {
+      return;
+    }
+
+    let products = [];
+    let editingProductId = null;
+
+    async function loadProducts() {
+      try {
+        const response = await productsAPI.getAll();
+        products = response.data || [];
+        renderTable();
+      } catch (error) {
+        console.error("Error loading products:", error);
+        alert("Error loading products.");
+      }
+    }
+
+    function renderTable() {
+      const table = document.getElementById("productTable");
+      table.innerHTML = "";
+      products.forEach((p) => {
+        table.innerHTML += `
+          <tr>
+            <td>${p.name}</td>
+            <td>Rs. ${p.price}</td>
+            <td>${p.category}</td>
+            <td><img src="${p.image}" alt="${p.name}" style="height:40px"/></td>
+            <td>
+              <button class="action-btn edit-btn" onclick="editProduct('${p._id}')">Edit</button>
+              <button class="action-btn delete-btn" onclick="deleteProduct('${p._id}')">Delete</button>
+            </td>
+          </tr>
+        `;
+      });
+    }
+
+    document.getElementById("productForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+      const name = document.getElementById("name").value;
+      const price = document.getElementById("price").value;
+      const category = document.getElementById("category").value;
+      const image = document.getElementById("image").value;
+      const description = document.getElementById("description")?.value || "";
+
+      try {
+        const productData = { name, price: parseFloat(price), category, image, description };
+        
+        if (editingProductId) {
+          await productsAPI.update(editingProductId, productData);
+          editingProductId = null;
+        } else {
+          await productsAPI.create(productData);
+        }
+        
+        await loadProducts();
+        this.reset();
+        alert("Product saved successfully!");
+      } catch (error) {
+        console.error("Error saving product:", error);
+        alert("Error saving product: " + error.message);
+      }
+    });
+
+    async function deleteProduct(productId) {
+      if (confirm("Are you sure to delete this product?")) {
+        try {
+          await productsAPI.delete(productId);
+          await loadProducts();
+          alert("Product deleted successfully!");
+        } catch (error) {
+          console.error("Error deleting product:", error);
+          alert("Error deleting product.");
+        }
+      }
+    }
+
+    function editProduct(productId) {
+      const p = products.find(prod => prod._id === productId);
+      if (!p) return;
+      
+      editingProductId = productId;
+      document.getElementById("name").value = p.name;
+      document.getElementById("price").value = p.price;
+      document.getElementById("category").value = p.category;
+      document.getElementById("image").value = p.image;
+      if (document.getElementById("description")) {
+        document.getElementById("description").value = p.description || "";
+      }
+    }
+
+    // Initial render
+    loadProducts();
+  </script>
+
+</body>
+</html>

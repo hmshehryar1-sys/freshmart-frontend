@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Orders - FreshMart</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Poppins', sans-serif;
+      display: flex;
+      background-color: #f9f9f9;
+      min-height: 100vh;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 240px;
+      background-color: #004D40;
+      color: white;
+      padding: 30px 20px;
+      display: flex;
+      flex-direction: column;
+    }
+    .sidebar h2 {
+      margin-bottom: 30px;
+      font-size: 1.6rem;
+      text-align: center;
+    }
+    .sidebar a {
+      color: white;
+      text-decoration: none;
+      padding: 12px 15px;
+      border-radius: 6px;
+      margin-bottom: 10px;
+      display: block;
+      transition: background 0.3s;
+    }
+    .sidebar a:hover {
+      background-color: #00796B;
+    }
+
+    /* Main Content */
+    .main {
+      flex: 1;
+      padding: 30px;
+    }
+    .main h1 {
+      margin-bottom: 20px;
+      color: #004D40;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background-color: white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    table th, table td {
+      padding: 12px 15px;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
+    table th {
+      background-color: #009688;
+      color: white;
+    }
+
+    .status-pending { color: #f39c12; font-weight: bold; }
+    .status-completed { color: #2ecc71; font-weight: bold; }
+
+    @media (max-width: 768px) {
+      .sidebar { display: none; }
+      body { flex-direction: column; }
+      table, table thead, table tbody, table th, table td, table tr {
+        display: block;
+      }
+      table td {
+        padding-left: 50%;
+        position: relative;
+      }
+      table td::before {
+        content: attr(data-label);
+        position: absolute;
+        left: 10px;
+        font-weight: bold;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <h2>FreshMart Admin</h2>
+    <a href="admin-dashboard.html">🏠 Dashboard</a>
+    <a href="admin-orders.html">📦 Manage Orders</a>
+    <a href="admin-users.html">👥 Manage Users</a>
+    <a href="admin-profile.html">🧑‍💼 Profile Settings</a>
+    <a href="admin-export.html">📄 Export Data</a>
+    <a href="#" onclick="logout()">🚪 Logout</a>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+    <h1>Order Management</h1>
+
+    <table id="ordersTable">
+      <thead>
+        <tr>
+          <th>Order ID</th>
+          <th>Customer</th>
+          <th>Date</th>
+          <th>Total (Rs.)</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Orders will load here -->
+      </tbody>
+    </table>
+  </main>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script>
+    // Wait for DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+      // Check admin authentication
+      if (!requireAdmin()) {
+        return;
+      }
+
+      // Make updateOrderStatus available globally
+      window.updateOrderStatus = async function(orderId, status) {
+        try {
+          await ordersAPI.updateStatus(orderId, status);
+          alert("Order status updated successfully!");
+          loadOrders();
+        } catch (error) {
+          console.error("Error updating order:", error);
+          alert("Error updating order status: " + (error.message || "Unknown error"));
+        }
+      };
+
+      async function loadOrders() {
+        const tableBody = document.querySelector('#ordersTable tbody');
+        
+        if (!tableBody) {
+          console.error('Table body not found!');
+          return;
+        }
+        
+        // Show loading state
+        tableBody.innerHTML = "<tr><td colspan='5' style='text-align: center; padding: 20px;'>Loading orders...</td></tr>";
+        
+        try {
+          console.log('Fetching orders from API...');
+          const response = await ordersAPI.getAll();
+          console.log('Orders API response:', response);
+          
+          // Handle different response structures
+          const orders = response.data || response || [];
+          console.log('Orders array:', orders);
+          
+          if (!Array.isArray(orders)) {
+            console.error('Invalid response format:', response);
+            tableBody.innerHTML = "<tr><td colspan='5' style='color: red;'>Error: Invalid response format from server.</td></tr>";
+            return;
+          }
+          
+          if (orders.length === 0) {
+            tableBody.innerHTML = "<tr><td colspan='5' style='text-align: center; padding: 20px;'>No orders found.</td></tr>";
+          } else {
+            tableBody.innerHTML = "";
+            orders.forEach((order) => {
+              const row = document.createElement("tr");
+              
+              // Handle order ID - use full ID if slice fails
+              let orderId = "N/A";
+              try {
+                if (order._id) {
+                  orderId = `#ORD${order._id.toString().slice(-6)}`;
+                }
+              } catch (e) {
+                console.warn('Error processing order ID:', e);
+              }
+              
+              // Handle date
+              let dateStr = "N/A";
+              try {
+                if (order.createdAt) {
+                  dateStr = new Date(order.createdAt).toLocaleDateString();
+                }
+              } catch (e) {
+                console.warn('Error processing date:', e);
+              }
+              
+              // Handle customer name
+              let customer = "N/A";
+              if (order.user) {
+                customer = order.user.name || order.user.email || "N/A";
+              }
+              
+              // Handle total amount
+              const total = order.totalAmount || 0;
+              
+              // Handle status
+              const status = order.status || 'pending';
+              
+              // Escape order ID for use in HTML attribute
+              const safeOrderId = order._id ? order._id.toString().replace(/"/g, '&quot;') : '';
+              
+              row.innerHTML = `
+                <td data-label="Order ID">${orderId}</td>
+                <td data-label="Customer">${customer}</td>
+                <td data-label="Date">${dateStr}</td>
+                <td data-label="Total">Rs. ${total.toFixed(2)}</td>
+                <td data-label="Status">
+                  <select onchange="updateOrderStatus('${safeOrderId}', this.value)">
+                    <option value="pending" ${status === 'pending' ? 'selected' : ''}>Pending</option>
+                    <option value="confirmed" ${status === 'confirmed' ? 'selected' : ''}>Confirmed</option>
+                    <option value="processing" ${status === 'processing' ? 'selected' : ''}>Processing</option>
+                    <option value="shipped" ${status === 'shipped' ? 'selected' : ''}>Shipped</option>
+                    <option value="delivered" ${status === 'delivered' ? 'selected' : ''}>Delivered</option>
+                    <option value="cancelled" ${status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
+                  </select>
+                </td>
+              `;
+              tableBody.appendChild(row);
+            });
+            console.log(`Successfully loaded ${orders.length} orders`);
+          }
+        } catch (error) {
+          console.error("Error loading orders:", error);
+          const errorMsg = error.message || 'Unknown error';
+          tableBody.innerHTML = `<tr><td colspan='5' style='color: red; text-align: center; padding: 20px;'>Error loading orders: ${errorMsg}<br><small>Check browser console (F12) for details.</small></td></tr>`;
+          console.error("Full error details:", error);
+        }
+      }
+
+      // Load orders when page loads
+      loadOrders();
+    });
+  </script>
+
+</body>
+</html>
+
